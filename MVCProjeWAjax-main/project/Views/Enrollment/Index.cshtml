@@ -1,0 +1,372 @@
+﻿@{
+    ViewData["Title"] = "Ders Kayıtları";
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-clipboard-list me-2"></i>Ders Kayıtları</h2>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEnrollmentModal">
+            <i class="fas fa-plus me-1"></i>Yeni Kayıt
+        </button>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="input-group">
+                <span class="input-group-text bg-dark text-light border-dark">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" id="searchEnrollment" class="form-control" placeholder="Kayıt Ara...">
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table id="enrollmentsTable" class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Öğrenci</th>
+                    <th>Ders</th>
+                    <th>Öğretmen</th>
+                    <th>Kayıt Tarihi</th>
+                    <th>Not</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="addEnrollmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>Yeni Kayıt Ekle
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addEnrollmentForm">
+                    <div class="mb-3">
+                        <label for="studentId" class="form-label">Öğrenci</label>
+                        <select class="form-select" id="studentId" name="StudentId" required>
+                            <option value="">Öğrenci Seçin</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="courseId" class="form-label">Ders</label>
+                        <select class="form-select" id="courseId" name="CourseId" required>
+                            <option value="">Ders Seçin</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="enrollmentDate" class="form-label">Kayıt Tarihi</label>
+                        <input type="date" class="form-control" id="enrollmentDate" name="EnrollmentDate" value="@DateTime.Now.ToString("yyyy-MM-dd")" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="grade" class="form-label">Not (Opsiyonel)</label>
+                        <input type="number" class="form-control" id="grade" name="Grade" min="0" max="100" step="0.01">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" id="saveEnrollmentBtn">
+                    <i class="fas fa-save me-1"></i>Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editEnrollmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Kayıt Düzenle
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editEnrollmentForm">
+                    <input type="hidden" id="editEnrollmentId" name="Id">
+                    <div class="mb-3">
+                        <label for="editStudentId" class="form-label">Öğrenci</label>
+                        <select class="form-select" id="editStudentId" name="StudentId" required>
+                            <option value="">Öğrenci Seçin</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editCourseId" class="form-label">Ders</label>
+                        <select class="form-select" id="editCourseId" name="CourseId" required>
+                            <option value="">Ders Seçin</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEnrollmentDate" class="form-label">Kayıt Tarihi</label>
+                        <input type="date" class="form-control" id="editEnrollmentDate" name="EnrollmentDate" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editGrade" class="form-label">Not (Opsiyonel)</label>
+                        <input type="number" class="form-control" id="editGrade" name="Grade" min="0" max="100" step="0.01">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" id="updateEnrollmentBtn">
+                    <i class="fas fa-save me-1"></i>Güncelle
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        console.log("Script başladı, jQuery var mı:", typeof jQuery !== 'undefined');
+
+        $(document).ready(function () {
+            console.log("Sayfa hazır!");
+
+            loadEnrollments();
+
+            loadStudentsDropdown();
+            loadCoursesDropdown();
+
+            $("#searchEnrollment").on("keyup", function () {
+                var value = $(this).val().toLowerCase();
+                $("#enrollmentsTable tbody tr").filter(function () {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                });
+            });
+
+            $("#saveEnrollmentBtn").click(function () {
+                console.log("Kaydet butonu tıklandı");
+
+                var studentId = $("#studentId").val();
+                var courseId = $("#courseId").val();
+                var enrollmentDate = $("#enrollmentDate").val();
+                var grade = $("#grade").val();
+
+                console.log("Form verileri:", {
+                    StudentId: studentId,
+                    CourseId: courseId,
+                    EnrollmentDate: enrollmentDate,
+                    Grade: grade
+                });
+
+                $.ajax({
+                    url: "/Enrollment/AddEnrollment",
+                    type: "POST",
+                    data: {
+                        StudentId: studentId,
+                        CourseId: courseId,
+                        EnrollmentDate: enrollmentDate,
+                        Grade: grade || null
+                    },
+                    success: function (response) {
+                        console.log("Sunucu yanıtı:", response);
+
+                        if (response.success) {
+                            $("#addEnrollmentModal").modal("hide");
+                            $("#addEnrollmentForm")[0].reset();
+                            loadEnrollments();
+                            alert(response.message);
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.log("AJAX hatası:", error);
+                        console.log("Detay:", xhr.responseText);
+                        alert("İşlem sırasında bir hata oluştu: " + error);
+                    }
+                });
+            });
+
+            $(document).on("click", ".edit-enrollment", function () {
+                var enrollmentId = $(this).data("id");
+                var studentId = $(this).data("studentid");
+                var courseId = $(this).data("courseid");
+                var enrollmentDate = $(this).data("date");
+                var grade = $(this).data("grade");
+
+                $("#editEnrollmentId").val(enrollmentId);
+                $("#editStudentId").val(studentId);
+                $("#editCourseId").val(courseId);
+                $("#editEnrollmentDate").val(formatDate(enrollmentDate));
+                $("#editGrade").val(grade || '');
+
+                $("#editEnrollmentModal").modal("show");
+            });
+
+            $("#updateEnrollmentBtn").click(function () {
+                var id = $("#editEnrollmentId").val();
+                var studentId = $("#editStudentId").val();
+                var courseId = $("#editCourseId").val();
+                var enrollmentDate = $("#editEnrollmentDate").val();
+                var grade = $("#editGrade").val();
+
+                console.log("Güncelleme verileri:", {
+                    Id: id,
+                    StudentId: studentId,
+                    CourseId: courseId,
+                    EnrollmentDate: enrollmentDate,
+                    Grade: grade
+                });
+
+                $.ajax({
+                    url: "/Enrollment/UpdateEnrollment",
+                    type: "POST",
+                    data: {
+                        Id: id,
+                        StudentId: studentId,
+                        CourseId: courseId,
+                        EnrollmentDate: enrollmentDate,
+                        Grade: grade || null
+                    },
+                    success: function (response) {
+                        console.log("Güncelleme yanıtı:", response);
+
+                        if (response.success) {
+                            $("#editEnrollmentModal").modal("hide");
+                            loadEnrollments();
+                            alert(response.message);
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.log("Güncelleme hatası:", error);
+                        console.log("Detay:", xhr.responseText);
+                        alert("İşlem sırasında bir hata oluştu: " + error);
+                    }
+                });
+            });
+
+            $(document).on("click", ".delete-enrollment", function () {
+                if (confirm("Bu kaydı silmek istediğinizden emin misiniz?")) {
+                    var enrollmentId = $(this).data("id");
+                    console.log("Silinecek kayıt ID:", enrollmentId);
+
+                    $.ajax({
+                        url: "/Enrollment/DeleteEnrollment",
+                        type: "POST",
+                        data: { id: enrollmentId },
+                        success: function (response) {
+                            console.log("Silme yanıtı:", response);
+
+                            if (response.success) {
+                                loadEnrollments();
+                                alert(response.message);
+                            } else {
+                                alert(response.message);
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            console.log("Silme hatası:", error);
+                            console.log("Detay:", xhr.responseText);
+                            alert("İşlem sırasında bir hata oluştu: " + error);
+                        }
+                    });
+                }
+            });
+        });
+
+        function loadEnrollments() {
+            console.log("Kayıtlar yükleniyor...");
+
+            $.ajax({
+                url: "/Enrollment/GetEnrollments",
+                type: "GET",
+                success: function (data) {
+                    console.log("Kayıt verileri alındı:", data);
+
+                    var html = '';
+                    $.each(data, function (index, enrollment) {
+                        html += '<tr>';
+                        html += '<td>' + enrollment.id + '</td>';
+                        html += '<td>' + enrollment.studentName + '</td>';
+                        html += '<td>' + enrollment.courseName + '</td>';
+                        html += '<td>' + enrollment.teacherName + '</td>';
+                        html += '<td>' + formatDate(enrollment.enrollmentDate) + '</td>';
+                        html += '<td>' + (enrollment.grade !== null ? enrollment.grade : '-') + '</td>';
+                        html += '<td class="action-buttons">';
+                        html += '<a href="#" class="edit-enrollment" data-id="' + enrollment.id + '" data-studentid="' + enrollment.studentId + '" data-courseid="' + enrollment.courseId + '" data-date="' + enrollment.enrollmentDate + '" data-grade="' + (enrollment.grade || '') + '"><i class="fas fa-edit text-warning"></i></a>';
+                        html += '<a href="#" class="delete-enrollment" data-id="' + enrollment.id + '"><i class="fas fa-trash-alt text-danger"></i></a>';
+                        html += '</td>';
+                        html += '</tr>';
+                    });
+
+                    $("#enrollmentsTable tbody").html(html);
+                },
+                error: function (xhr, status, error) {
+                    console.log("Kayıt yükleme hatası:", error);
+                    console.log("Detay:", xhr.responseText);
+                }
+            });
+        }
+
+        function loadStudentsDropdown() {
+            console.log("Öğrenciler dropdown için yükleniyor...");
+
+            $.ajax({
+                url: "/Enrollment/GetStudentsForDropdown",
+                type: "GET",
+                success: function (data) {
+                    console.log("Öğrenci dropdown verileri alındı:", data);
+
+                    var html = '<option value="">Öğrenci Seçin</option>';
+                    $.each(data, function (index, student) {
+                        html += '<option value="' + student.value + '">' + student.text + '</option>';
+                    });
+
+                    $("#studentId").html(html);
+                    $("#editStudentId").html(html);
+                },
+                error: function (xhr, status, error) {
+                    console.log("Öğrenci dropdown yükleme hatası:", error);
+                    console.log("Detay:", xhr.responseText);
+                }
+            });
+        }
+
+        function loadCoursesDropdown() {
+            console.log("Dersler dropdown için yükleniyor...");
+
+            $.ajax({
+                url: "/Enrollment/GetCoursesForDropdown",
+                type: "GET",
+                success: function (data) {
+                    console.log("Ders dropdown verileri alındı:", data);
+
+                    var html = '<option value="">Ders Seçin</option>';
+                    $.each(data, function (index, course) {
+                        html += '<option value="' + course.value + '">' + course.text + '</option>';
+                    });
+
+                    $("#courseId").html(html);
+                    $("#editCourseId").html(html);
+                },
+                error: function (xhr, status, error) {
+                    console.log("Ders dropdown yükleme hatası:", error);
+                    console.log("Detay:", xhr.responseText);
+                }
+            });
+        }
+
+        function formatDate(dateString) {
+            var date = new Date(dateString);
+            var year = date.getFullYear();
+            var month = ('0' + (date.getMonth() + 1)).slice(-2);
+            var day = ('0' + date.getDate()).slice(-2);
+            return year + '-' + month + '-' + day;
+        }
+    </script>
+}

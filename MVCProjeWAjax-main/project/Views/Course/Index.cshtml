@@ -1,0 +1,339 @@
+﻿@{
+    ViewData["Title"] = "Ders Yönetimi";
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-book me-2"></i>Ders Listesi</h2>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCourseModal">
+            <i class="fas fa-plus me-1"></i>Yeni Ders
+        </button>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="input-group">
+                <span class="input-group-text bg-dark text-light border-dark">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" id="searchCourse" class="form-control" placeholder="Ders Ara...">
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table id="coursesTable" class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Ders Adı</th>
+                    <th>Kredi</th>
+                    <th>Öğretmen</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="addCourseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>Yeni Ders Ekle
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addCourseForm">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Ders Adı</label>
+                        <input type="text" class="form-control" id="name" name="Name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Açıklama</label>
+                        <textarea class="form-control" id="description" name="Description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="credits" class="form-label">Kredi</label>
+                        <input type="number" class="form-control" id="credits" name="Credits" min="1" max="10" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="teacherId" class="form-label">Öğretmen</label>
+                        <select class="form-select" id="teacherId" name="TeacherId" required>
+                            <option value="">Öğretmen Seçin</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" id="saveCourseBtn">
+                    <i class="fas fa-save me-1"></i>Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editCourseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Ders Düzenle
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editCourseForm">
+                    <input type="hidden" id="editCourseId" name="Id">
+                    <div class="mb-3">
+                        <label for="editName" class="form-label">Ders Adı</label>
+                        <input type="text" class="form-control" id="editName" name="Name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDescription" class="form-label">Açıklama</label>
+                        <textarea class="form-control" id="editDescription" name="Description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editCredits" class="form-label">Kredi</label>
+                        <input type="number" class="form-control" id="editCredits" name="Credits" min="1" max="10" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editTeacherId" class="form-label">Öğretmen</label>
+                        <select class="form-select" id="editTeacherId" name="TeacherId" required>
+                            <option value="">Öğretmen Seçin</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" id="updateCourseBtn">
+                    <i class="fas fa-save me-1"></i>Güncelle
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        console.log("Script başladı, jQuery var mı:", typeof jQuery !== 'undefined');
+
+        if (typeof jQuery === 'undefined') {
+            console.log("jQuery eksik, yükleniyor...");
+            document.write('<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\/script>');
+        }
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            console.log("Sayfa hazır!");
+
+            loadCourses();
+
+            loadTeachersDropdown();
+
+            $("#searchCourse").on("keyup", function () {
+                var value = $(this).val().toLowerCase();
+                $("#coursesTable tbody tr").filter(function () {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+
+            $("#saveCourseBtn").click(function () {
+                console.log("Kaydet butonu tıklandı");
+
+                var name = $("#name").val();
+                var description = $("#description").val();
+                var credits = $("#credits").val();
+                var teacherId = $("#teacherId").val();
+
+                console.log("Form verileri:", {
+                    Name: name,
+                    Description: description,
+                    Credits: credits,
+                    TeacherId: teacherId
+                });
+
+                $.ajax({
+                    url: "/Course/AddCourse",
+                    type: "POST",
+                    data: {
+                        Name: name,
+                        Description: description,
+                        Credits: credits,
+                        TeacherId: teacherId
+                    },
+                    success: function (response) {
+                        console.log("Sunucu yanıtı:", response);
+
+                        if (response.success) {
+                            $("#addCourseModal").modal("hide");
+                            $("#addCourseForm")[0].reset();
+                            loadCourses();
+                            alert(response.message);
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.log("AJAX hatası:", error);
+                        console.log("Detay:", xhr.responseText);
+                        alert("İşlem sırasında bir hata oluştu: " + error);
+                    }
+                });
+            });
+
+            $(document).on("click", ".edit-course", function () {
+                var courseId = $(this).data("id");
+                var name = $(this).data("name");
+                var description = $(this).data("description");
+                var credits = $(this).data("credits");
+                var teacherId = $(this).data("teacherid");
+
+                $("#editCourseId").val(courseId);
+                $("#editName").val(name);
+                $("#editDescription").val(description);
+                $("#editCredits").val(credits);
+                $("#editTeacherId").val(teacherId);
+
+                $("#editCourseModal").modal("show");
+            });
+
+            $("#updateCourseBtn").click(function () {
+                var id = $("#editCourseId").val();
+                var name = $("#editName").val();
+                var description = $("#editDescription").val();
+                var credits = $("#editCredits").val();
+                var teacherId = $("#editTeacherId").val();
+
+                console.log("Güncelleme verileri:", {
+                    Id: id,
+                    Name: name,
+                    Description: description,
+                    Credits: credits,
+                    TeacherId: teacherId
+                });
+
+                $.ajax({
+                    url: "/Course/UpdateCourse",
+                    type: "POST",
+                    data: {
+                        Id: id,
+                        Name: name,
+                        Description: description,
+                        Credits: credits,
+                        TeacherId: teacherId
+                    },
+                    success: function (response) {
+                        console.log("Güncelleme yanıtı:", response);
+
+                        if (response.success) {
+                            $("#editCourseModal").modal("hide");
+                            loadCourses();
+                            alert(response.message);
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.log("Güncelleme hatası:", error);
+                        console.log("Detay:", xhr.responseText);
+                        alert("İşlem sırasında bir hata oluştu: " + error);
+                    }
+                });
+            });
+
+            $(document).on("click", ".delete-course", function () {
+                if (confirm("Bu dersi silmek istediğinizden emin misiniz?")) {
+                    var courseId = $(this).data("id");
+                    console.log("Silinecek ders ID:", courseId);
+
+                    $.ajax({
+                        url: "/Course/DeleteCourse",
+                        type: "POST",
+                        data: { id: courseId },
+                        success: function (response) {
+                            console.log("Silme yanıtı:", response);
+
+                            if (response.success) {
+                                loadCourses();
+                                alert(response.message);
+                            } else {
+                                alert(response.message);
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            console.log("Silme hatası:", error);
+                            console.log("Detay:", xhr.responseText);
+                            alert("İşlem sırasında bir hata oluştu: " + error);
+                        }
+                    });
+                }
+            });
+        });
+
+        function loadCourses() {
+            console.log("Dersler yükleniyor...");
+
+            $.ajax({
+                url: "/Course/GetCourses",
+                type: "GET",
+                success: function (data) {
+                    console.log("Ders verileri alındı:", data);
+
+                    var html = '';
+                    $.each(data, function (index, course) {
+                        html += '<tr>';
+                        html += '<td>' + course.id + '</td>';
+                        html += '<td>' + course.name + '</td>';
+                        html += '<td>' + course.credits + '</td>';
+                        html += '<td>' + course.teacherName + '</td>';
+                        html += '<td class="action-buttons">';
+                        html += '<a href="#" class="edit-course" data-id="' + course.id + '" data-name="' + course.name + '" data-description="' + (course.description || '') + '" data-credits="' + course.credits + '" data-teacherid="' + course.teacherId + '"><i class="fas fa-edit text-warning"></i></a>';
+                        html += '<a href="#" class="delete-course" data-id="' + course.id + '"><i class="fas fa-trash-alt text-danger"></i></a>';
+                        html += '<a href="/Course/Details/' + course.id + '"><i class="fas fa-info-circle text-info"></i></a>';
+                        html += '</td>';
+                        html += '</tr>';
+                    });
+
+                    $("#coursesTable tbody").html(html);
+                },
+                error: function (xhr, status, error) {
+                    console.log("Ders yükleme hatası:", error);
+                    console.log("Detay:", xhr.responseText);
+                }
+            });
+        }
+
+        function loadTeachersDropdown() {
+            console.log("Öğretmenler dropdown için yükleniyor...");
+
+            $.ajax({
+                url: "/Course/GetTeachersForDropdown",
+                type: "GET",
+                success: function (data) {
+                    console.log("Öğretmen dropdown verileri alındı:", data);
+
+                    var html = '<option value="">Öğretmen Seçin</option>';
+                    $.each(data, function (index, teacher) {
+                        html += '<option value="' + teacher.value + '">' + teacher.text + '</option>';
+                    });
+
+                    $("#teacherId").html(html);
+                    $("#editTeacherId").html(html);
+                },
+                error: function (xhr, status, error) {
+                    console.log("Öğretmen dropdown yükleme hatası:", error);
+                    console.log("Detay:", xhr.responseText);
+                }
+            });
+        }
+    </script>
+}

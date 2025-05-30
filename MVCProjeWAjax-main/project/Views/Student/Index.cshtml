@@ -1,0 +1,339 @@
+﻿@{
+    ViewData["Title"] = "Öğrenci Yönetimi";
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-user-graduate me-2"></i>Öğrenci Listesi</h2>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+            <i class="fas fa-plus me-1"></i>Yeni Öğrenci
+        </button>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="input-group">
+                <span class="input-group-text bg-dark text-light border-dark">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" id="searchStudent" class="form-control" placeholder="Öğrenci Ara...">
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table id="studentsTable" class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Adı</th>
+                    <th>Soyadı</th>
+                    <th>E-posta</th>
+                    <th>Telefon</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="addStudentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2"></i>Yeni Öğrenci Ekle
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addStudentForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="firstName" class="form-label">Adı</label>
+                            <input type="text" class="form-control" id="firstName" name="FirstName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="lastName" class="form-label">Soyadı</label>
+                            <input type="text" class="form-control" id="lastName" name="LastName" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">E-posta</label>
+                        <input type="email" class="form-control" id="email" name="Email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="birthDate" class="form-label">Doğum Tarihi</label>
+                        <input type="date" class="form-control" id="birthDate" name="BirthDate" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="phoneNumber" class="form-label">Telefon</label>
+                        <input type="tel" class="form-control" id="phoneNumber" name="PhoneNumber">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" id="saveStudentBtn">
+                    <i class="fas fa-save me-1"></i>Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editStudentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-edit me-2"></i>Öğrenci Düzenle
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editStudentForm">
+                    <input type="hidden" id="editStudentId" name="Id">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="editFirstName" class="form-label">Adı</label>
+                            <input type="text" class="form-control" id="editFirstName" name="FirstName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editLastName" class="form-label">Soyadı</label>
+                            <input type="text" class="form-control" id="editLastName" name="LastName" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEmail" class="form-label">E-posta</label>
+                        <input type="email" class="form-control" id="editEmail" name="Email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editBirthDate" class="form-label">Doğum Tarihi</label>
+                        <input type="date" class="form-control" id="editBirthDate" name="BirthDate" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPhoneNumber" class="form-label">Telefon</label>
+                        <input type="tel" class="form-control" id="editPhoneNumber" name="PhoneNumber">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" id="updateStudentBtn">
+                    <i class="fas fa-save me-1"></i>Güncelle
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        console.log("Script başladı, jQuery var mı:", typeof jQuery !== 'undefined');
+
+        if (typeof jQuery === 'undefined') {
+            console.log("jQuery eksik, yükleniyor...");
+            document.write('<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\/script>');
+        }
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            console.log("Sayfa hazır!");
+
+            loadStudents();
+
+            $("#searchStudent").on("keyup", function () {
+                var value = $(this).val().toLowerCase();
+                $("#studentsTable tbody tr").filter(function () {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+
+            $("#saveStudentBtn").click(function () {
+                console.log("Kaydet butonu tıklandı");
+
+                var firstName = $("#firstName").val();
+                var lastName = $("#lastName").val();
+                var email = $("#email").val();
+                var birthDate = $("#birthDate").val();
+                var phoneNumber = $("#phoneNumber").val();
+
+                console.log("Form verileri:", {
+                    FirstName: firstName,
+                    LastName: lastName,
+                    Email: email,
+                    BirthDate: birthDate,
+                    PhoneNumber: phoneNumber
+                });
+
+                $.ajax({
+                    url: "/Student/AddStudent",
+                    type: "POST",
+                    data: {
+                        FirstName: firstName,
+                        LastName: lastName,
+                        Email: email,
+                        BirthDate: birthDate,
+                        PhoneNumber: phoneNumber
+                    },
+                    success: function (response) {
+                        console.log("Sunucu yanıtı:", response);
+
+                        if (response.success) {
+                            $("#addStudentModal").modal("hide");
+                            $("#addStudentForm")[0].reset();
+                            loadStudents();
+                            alert(response.message);
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.log("AJAX hatası:", error);
+                        console.log("Detay:", xhr.responseText);
+                        alert("İşlem sırasında bir hata oluştu: " + error);
+                    }
+                });
+            });
+
+            $(document).on("click", ".edit-student", function () {
+                var studentId = $(this).data("id");
+                var firstName = $(this).data("firstname");
+                var lastName = $(this).data("lastname");
+                var email = $(this).data("email");
+                var birthDate = $(this).data("birthdate");
+                var phoneNumber = $(this).data("phone");
+
+                $("#editStudentId").val(studentId);
+                $("#editFirstName").val(firstName);
+                $("#editLastName").val(lastName);
+                $("#editEmail").val(email);
+                $("#editBirthDate").val(birthDate);
+                $("#editPhoneNumber").val(phoneNumber);
+
+                $("#editStudentModal").modal("show");
+            });
+
+            $("#updateStudentBtn").click(function () {
+                var id = $("#editStudentId").val();
+                var firstName = $("#editFirstName").val();
+                var lastName = $("#editLastName").val();
+                var email = $("#editEmail").val();
+                var birthDate = $("#editBirthDate").val();
+                var phoneNumber = $("#editPhoneNumber").val();
+
+                console.log("Güncelleme verileri:", {
+                    Id: id,
+                    FirstName: firstName,
+                    LastName: lastName,
+                    Email: email,
+                    BirthDate: birthDate,
+                    PhoneNumber: phoneNumber
+                });
+
+                $.ajax({
+                    url: "/Student/UpdateStudent",
+                    type: "POST",
+                    data: {
+                        Id: id,
+                        FirstName: firstName,
+                        LastName: lastName,
+                        Email: email,
+                        BirthDate: birthDate,
+                        PhoneNumber: phoneNumber
+                    },
+                    success: function (response) {
+                        console.log("Güncelleme yanıtı:", response);
+
+                        if (response.success) {
+                            $("#editStudentModal").modal("hide");
+                            loadStudents();
+                            alert(response.message);
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.log("Güncelleme hatası:", error);
+                        console.log("Detay:", xhr.responseText);
+                        alert("İşlem sırasında bir hata oluştu: " + error);
+                    }
+                });
+            });
+
+            $(document).on("click", ".delete-student", function () {
+                if (confirm("Bu öğrenciyi silmek istediğinizden emin misiniz?")) {
+                    var studentId = $(this).data("id");
+                    console.log("Silinecek öğrenci ID:", studentId);
+
+                    $.ajax({
+                        url: "/Student/DeleteStudent",
+                        type: "POST",
+                        data: { id: studentId },
+                        success: function (response) {
+                            console.log("Silme yanıtı:", response);
+
+                            if (response.success) {
+                                loadStudents();
+                                alert(response.message);
+                            } else {
+                                alert(response.message);
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            console.log("Silme hatası:", error);
+                            console.log("Detay:", xhr.responseText);
+                            alert("İşlem sırasında bir hata oluştu: " + error);
+                        }
+                    });
+                }
+            });
+        });
+
+        function loadStudents() {
+            console.log("Öğrenciler yükleniyor...");
+
+            $.ajax({
+                url: "/Student/GetStudents",
+                type: "GET",
+                success: function (data) {
+                    console.log("Öğrenci verileri alındı:", data);
+
+                    var html = '';
+                    $.each(data, function (index, student) {
+                        html += '<tr>';
+                        html += '<td>' + student.id + '</td>';
+                        html += '<td>' + student.firstName + '</td>';
+                        html += '<td>' + student.lastName + '</td>';
+                        html += '<td>' + student.email + '</td>';
+                        html += '<td>' + (student.phoneNumber || '-') + '</td>';
+                        html += '<td class="action-buttons">';
+                        html += '<a href="#" class="edit-student" data-id="' + student.id + '" data-firstname="' + student.firstName + '" data-lastname="' + student.lastName + '" data-email="' + student.email + '" data-birthdate="' + formatDate(student.birthDate) + '" data-phone="' + (student.phoneNumber || '') + '"><i class="fas fa-edit text-warning"></i></a>';
+                        html += '<a href="#" class="delete-student" data-id="' + student.id + '"><i class="fas fa-trash-alt text-danger"></i></a>';
+                        html += '<a href="/Student/Details/' + student.id + '"><i class="fas fa-info-circle text-info"></i></a>';
+                        html += '</td>';
+                        html += '</tr>';
+                    });
+
+                    $("#studentsTable tbody").html(html);
+                },
+                error: function (xhr, status, error) {
+                    console.log("Öğrenci yükleme hatası:", error);
+                    console.log("Detay:", xhr.responseText);
+                }
+            });
+        }
+
+        function formatDate(dateString) {
+            var date = new Date(dateString);
+            var year = date.getFullYear();
+            var month = ('0' + (date.getMonth() + 1)).slice(-2);
+            var day = ('0' + date.getDate()).slice(-2);
+            return year + '-' + month + '-' + day;
+        }
+    </script>
+}

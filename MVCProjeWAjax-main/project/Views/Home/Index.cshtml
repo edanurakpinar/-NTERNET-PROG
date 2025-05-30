@@ -1,0 +1,154 @@
+﻿@{
+    ViewData["Title"] = "Ana Sayfa";
+}
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="container">
+            <h2><i class="fas fa-tachometer-alt me-2"></i>Gösterge Paneli</h2>
+            <hr>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="dashboard-stat">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <div class="stat-value" id="studentCount">0</div>
+                        <div class="stat-label">Toplam Öğrenci</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="dashboard-stat">
+                        <div class="stat-icon">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                        </div>
+                        <div class="stat-value" id="teacherCount">0</div>
+                        <div class="stat-label">Toplam Öğretmen</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="dashboard-stat">
+                        <div class="stat-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="stat-value" id="courseCount">0</div>
+                        <div class="stat-label">Aktif Ders</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="dashboard-stat">
+                        <div class="stat-icon">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <div class="stat-value" id="enrollmentCount">0</div>
+                        <div class="stat-label">Toplam Kayıt</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="container">
+            <h4><i class="fas fa-user-graduate me-2"></i>Son Eklenen Öğrenciler</h4>
+            <hr>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Adı Soyadı</th>
+                        <th>Email</th>
+                        <th>İşlem</th>
+                    </tr>
+                </thead>
+                <tbody id="recentStudentsTable">
+                </tbody>
+            </table>
+            <div class="text-end">
+                <a asp-controller="Student" asp-action="Index" class="btn btn-primary btn-sm">Tüm Öğrenciler <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="container">
+            <h4><i class="fas fa-book me-2"></i>Aktif Dersler</h4>
+            <hr>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Ders Adı</th>
+                        <th>Öğretmen</th>
+                        <th>İşlem</th>
+                    </tr>
+                </thead>
+                <tbody id="activeCourseTable">
+                </tbody>
+            </table>
+            <div class="text-end">
+                <a asp-controller="Course" asp-action="Index" class="btn btn-primary btn-sm">Tüm Dersler <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            loadDashboardStats();
+
+            loadRecentStudents();
+
+            loadActiveCourses();
+        });
+
+        function loadDashboardStats() {
+            $.ajax({
+                url: "/Home/GetDashboardStats",
+                type: "GET",
+                success: function(response) {
+                    $("#studentCount").text(response.studentCount);
+                    $("#teacherCount").text(response.teacherCount);
+                    $("#courseCount").text(response.courseCount);
+                    $("#enrollmentCount").text(response.enrollmentCount);
+                }
+            });
+        }
+
+        function loadRecentStudents() {
+            $.ajax({
+                url: "/Home/GetRecentStudents",
+                type: "GET",
+                success: function(data) {
+                    var html = '';
+                    $.each(data, function(index, student) {
+                        html += '<tr>';
+                        html += '<td>' + student.firstName + ' ' + student.lastName + '</td>';
+                        html += '<td>' + student.email + '</td>';
+                        html += '<td><a href="/Student/Details/' + student.id + '" class="btn btn-sm btn-primary">Detay</a></td>';
+                        html += '</tr>';
+                    });
+                    $("#recentStudentsTable").html(html);
+                }
+            });
+        }
+
+        function loadActiveCourses() {
+            $.ajax({
+                url: "/Home/GetActiveCourses",
+                type: "GET",
+                success: function(data) {
+                    var html = '';
+                    $.each(data, function(index, course) {
+                        html += '<tr>';
+                        html += '<td>' + course.name + '</td>';
+                        html += '<td>' + course.teacherName + '</td>';
+                        html += '<td><a href="/Course/Details/' + course.id + '" class="btn btn-sm btn-primary">Detay</a></td>';
+                        html += '</tr>';
+                    });
+                    $("#activeCourseTable").html(html);
+                }
+            });
+        }
+    </script>
+}

@@ -1,0 +1,86 @@
+﻿@model project.Models.Course
+
+@{
+    ViewData["Title"] = "Ders Detayları";
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-book me-2"></i>Ders Detayları</h2>
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Listeye Dön
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="card-title">Ders Bilgileri</h4>
+                    <hr>
+                    <dl class="row">
+                        <dt class="col-sm-4">Ders Adı:</dt>
+                        <dd class="col-sm-8">@Model.Name</dd>
+
+                        <dt class="col-sm-4">Açıklama:</dt>
+                        <dd class="col-sm-8">@(Model.Description ?? "-")</dd>
+
+                        <dt class="col-sm-4">Kredi:</dt>
+                        <dd class="col-sm-8">@Model.Credits</dd>
+
+                        <dt class="col-sm-4">Öğretmen:</dt>
+                        <dd class="col-sm-8">
+                            <a href="@Url.Action("Details", "Teacher", new { id = Model.TeacherId })">
+                                @Model.Teacher.FirstName @Model.Teacher.LastName
+                            </a>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Kayıtlı Öğrenciler</h4>
+                    <hr>
+
+                    @if (Model.Enrollments != null && Model.Enrollments.Any())
+                    {
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Öğrenci Adı</th>
+                                            <th>Kayıt Tarihi</th>
+                                            <th>Not</th>
+                                            <th>İşlem</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach (var enrollment in Model.Enrollments)
+                                    {
+                                                <tr>
+                                                    <td>@enrollment.Student.FirstName @enrollment.Student.LastName</td>
+                                                    <td>@enrollment.EnrollmentDate.ToString("dd.MM.yyyy")</td>
+                                                    <td>@(enrollment.Grade != null ? enrollment.Grade.ToString() : "-")</td>
+                                                    <td>
+                                                        <a href="@Url.Action("Details", "Student", new { id = enrollment.StudentId })" class="btn btn-sm btn-primary">
+                                                            <i class="fas fa-info-circle"></i> Öğrenci
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                    }
+                                    </tbody>
+                                </table>
+                            </div>
+                    }
+                    else
+                    {
+                            <p class="text-center">Bu derse henüz kayıtlı öğrenci bulunmamaktadır.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
